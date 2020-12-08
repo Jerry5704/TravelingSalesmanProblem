@@ -66,6 +66,37 @@ def all_perm_method(result_panel):
     result_panel.insert(INSERT, "\n\nCalculation time: " + str(time_sum) + "s")
 
 
+def confirm_perm(type_in_perm_window, permutation_text, result_panel):
+    global number_of_cities
+    permutation = []
+    permutation.append(permutation_text.get().split(" "))
+    type_in_perm_window.destroy()
+    result = 0
+    i = 0
+    while i < len(permutation[0]):
+        if (i + 1) == number_of_cities:
+            i = -1
+            result = result + cities_matrix[int(permutation[0][i])][int(permutation[0][i + 1])]
+            i = number_of_cities
+        else:
+            result = result + cities_matrix[int(permutation[0][i])][int(permutation[0][i + 1])]
+            i = i + 1
+    result_panel.insert(INSERT, "Permutation: " + str(permutation[0]))
+    result_panel.insert(INSERT, "\n\nResult: " + str(result))
+
+
+def constant_perm_method(result_panel):
+    type_in_perm_window = Tk()
+    type_in_perm_window.geometry('700x120')
+    description_label = Label(type_in_perm_window, text="Type new permutation below (separate with spacebars):", font="none 14 bold")
+    description_label.pack()
+    permutation_text = Entry(type_in_perm_window, width=50, font="none 14 bold")
+    permutation_text.pack(pady=10)
+    result_panel.delete(0.0, END)
+    confirm_button = Button(type_in_perm_window, text="Confirm", command=lambda: confirm_perm(type_in_perm_window, permutation_text, result_panel))
+    confirm_button.pack()
+
+
 class Window:
     def __init__(self, root):
         self.root = root
@@ -104,7 +135,7 @@ class Window:
         algorithm_panel = Frame(self.root, width=200, height=1024)
         algorithm_panel.place(x=200, y=100)
         all_perm_algorithm_button = Button(algorithm_panel, command=lambda: all_perm_method(result_panel), text="All permutations")
-        const_perm_algorithm_button = Button(algorithm_panel, bg="grey", text="Constant permutation")
+        const_perm_algorithm_button = Button(algorithm_panel, command=lambda: constant_perm_method(result_panel), text="Constant permutation")
         sa_algorithm_button = Button(algorithm_panel, bg="grey", text="SA algorithm")
         all_perm_algorithm_button.pack(padx=50)
         const_perm_algorithm_button.pack(pady=50)
