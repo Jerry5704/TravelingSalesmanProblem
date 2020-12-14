@@ -2,6 +2,8 @@ from tkinter import *
 from tkinter import filedialog
 import itertools
 import time
+import random
+import math
 
 number_of_cities = 0
 cities_matrix = []
@@ -35,6 +37,22 @@ def open_matrix(matrix_panel, info_panel):
     info_panel.config(text="Current number of cities: " + str(number_of_cities))
 
 
+def calculate_permutation_result(permutation):
+    global cities_matrix
+    global number_of_cities
+    result = 0
+    i = 0
+    while i < len(permutation):
+        if (i + 1) == number_of_cities:
+            i = -1
+            result = result + cities_matrix[int(permutation[i])][int(permutation[i + 1])]
+            i = number_of_cities
+        else:
+            result = result + cities_matrix[int(permutation[i])][int(permutation[i + 1])]
+            i = i + 1
+    return result
+
+
 def all_perm_method(result_panel):
     global number_of_cities
     initial_permutation = [++i for i in range(number_of_cities)]
@@ -46,18 +64,18 @@ def all_perm_method(result_panel):
     while i < len(every_permutation):
         j = 0
         while j < number_of_cities:
-            if (j+1) == number_of_cities:
+            if (j + 1) == number_of_cities:
                 j = -1
-                distance = distance + cities_matrix[every_permutation[i][j]][every_permutation[i][j+1]]
-                j = number_of_cities-1
+                distance = distance + cities_matrix[every_permutation[i][j]][every_permutation[i][j + 1]]
+                j = number_of_cities - 1
             else:
                 distance = distance + cities_matrix[every_permutation[i][j]][every_permutation[i][j + 1]]
-            j = j+1
+            j = j + 1
         if distance < result:
             result = distance
             best_permutation = every_permutation[i]
         distance = 0
-        i = i+1
+        i = i + 1
     end_time = time.time()
     time_sum = end_time - start_time
     result_panel.delete(0.0, END)
@@ -88,13 +106,61 @@ def confirm_perm(type_in_perm_window, permutation_text, result_panel):
 def constant_perm_method(result_panel):
     type_in_perm_window = Tk()
     type_in_perm_window.geometry('700x120')
-    description_label = Label(type_in_perm_window, text="Type new permutation below (separate with spacebars):", font="none 14 bold")
+    description_label = Label(type_in_perm_window, text="Type new permutation below (separate with spacebars):",
+                              font="none 14 bold")
     description_label.pack()
     permutation_text = Entry(type_in_perm_window, width=50, font="none 14 bold")
     permutation_text.pack(pady=10)
     result_panel.delete(0.0, END)
-    confirm_button = Button(type_in_perm_window, text="Confirm", command=lambda: confirm_perm(type_in_perm_window, permutation_text, result_panel))
+    confirm_button = Button(type_in_perm_window, text="Confirm",
+                            command=lambda: confirm_perm(type_in_perm_window, permutation_text, result_panel))
     confirm_button.pack()
+
+
+def check_if_equal(first_random_number, second_random_number):
+    global number_of_cities
+    if first_random_number == second_random_number:
+        while first_random_number == second_random_number:
+            second_random_number = random.randint(1, number_of_cities)
+
+
+def switch_places(first_random_number, second_random_number, permutation):
+    temp_position = permutation[second_random_number]
+    permutation[second_random_number] = permutation[first_random_number]
+    permutation[first_random_number] = temp_position
+
+
+def sa_algorithm_method(result_panel):
+    global number_of_cities
+    permutation = [++i for i in range(number_of_cities)]
+    initial_result = calculate_permutation_result(permutation)
+    current_result = initial_result
+    best_result = current_result
+    initial_temperature = 1000
+    current_temperature = initial_temperature
+    final_temperature = 0.01
+    cooling_rate = 0.995
+    while current_temperature > final_temperature:
+        first_random_number = random.randint(1, number_of_cities - 1)
+        second_random_number = random.randint(1, number_of_cities - 1)
+        check_if_equal(first_random_number, second_random_number)
+        switch_places(first_random_number, second_random_number, permutation)
+        new_result = calculate_permutation_result(permutation)
+        if best_result > new_result:
+            best_result = new_result
+            best_permutation = permutation[:]
+        if new_result <= current_result:
+            current_result = new_result
+        else:
+            delta = new_result - current_result
+            p = math.exp(-delta / current_temperature)
+            z = random.uniform(0, 1)
+            if z < p:
+                current_result = new_result
+            current_temperature = current_temperature * cooling_rate
+    result_panel.delete(0.0, END)
+    result_panel.insert(INSERT, "Best permutation: " + str(best_permutation))
+    result_panel.insert(INSERT, "\n\nResult: " + str(best_result))
 
 
 class Window:
@@ -134,9 +200,12 @@ class Window:
     def create_algorithm_panel(self, result_panel):
         algorithm_panel = Frame(self.root, width=200, height=1024)
         algorithm_panel.place(x=200, y=100)
-        all_perm_algorithm_button = Button(algorithm_panel, command=lambda: all_perm_method(result_panel), text="All permutations")
-        const_perm_algorithm_button = Button(algorithm_panel, command=lambda: constant_perm_method(result_panel), text="Constant permutation")
-        sa_algorithm_button = Button(algorithm_panel, bg="grey", text="SA algorithm")
+        all_perm_algorithm_button = Button(algorithm_panel, command=lambda: all_perm_method(result_panel),
+                                           text="All permutations")
+        const_perm_algorithm_button = Button(algorithm_panel, command=lambda: constant_perm_method(result_panel),
+                                             text="Constant permutation")
+        sa_algorithm_button = Button(algorithm_panel, command=lambda: sa_algorithm_method(result_panel),
+                                     text="SA algorithm")
         all_perm_algorithm_button.pack(padx=50)
         const_perm_algorithm_button.pack(pady=50)
         sa_algorithm_button.pack()
